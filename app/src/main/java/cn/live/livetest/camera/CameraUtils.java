@@ -1,5 +1,7 @@
 package cn.live.livetest.camera;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.Context;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.util.Log;
@@ -291,6 +293,17 @@ public class CameraUtils {
         }
         //设置角度
         sCamera.setDisplayOrientation(result);
+    }
+
+    public static void checkCameraService(Context context) throws Exception {
+        DevicePolicyManager devicePolicyManager=(DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        if(devicePolicyManager.getCameraDisabled(null)){
+            throw new Exception("cameraDisable");
+        }
+        List<CameraData> allCamerasData = getAllCamerasData(false);
+        if(allCamerasData.size()==0){
+            throw new Exception("no camera data");
+        }
     }
 }
 

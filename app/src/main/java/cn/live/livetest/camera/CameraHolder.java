@@ -28,7 +28,7 @@ public class CameraHolder {
 
     private static CameraHolder sHolder;
 
-    private static synchronized CameraHolder instance() {
+    public static synchronized CameraHolder instance() {
         if (sHolder == null) {
             sHolder = new CameraHolder();
         }
@@ -134,7 +134,7 @@ public class CameraHolder {
         mState = State.OPENED;
     }
 
-    private synchronized void releaseCamera() {
+    public synchronized void releaseCamera() {
         if (mState == State.PREVIEW) stopPreview();
         if(mState!=State.OPENED||mCameraDevice==null)return;
         mCameraDevice.release();
