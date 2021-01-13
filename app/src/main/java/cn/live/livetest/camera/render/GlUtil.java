@@ -8,22 +8,22 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 public class GlUtil {
-    public static FloatBuffer createSquareVertexBuffer() {
-        final float vtx[] = {
-                -1f, 1f, 0f, 0f, 1f,
-                -1f, -1f, 0f, 0f, 0f,
-                1f, 1f, 0f, 1f, 1f,
-                1f, -1f, 0f, 1f, 0f,
-        };
 
-        ByteBuffer bb=ByteBuffer.allocateDirect(4*vtx.length);
+    public static FloatBuffer createSquareVtx() {
+        final float vtx[] = {
+                // XYZ, UV
+                -1f,  1f, 0f, 0f, 1f,
+                -1f, -1f, 0f, 0f, 0f,
+                1f,   1f, 0f, 1f, 1f,
+                1f,  -1f, 0f, 1f, 0f,
+        };
+        ByteBuffer bb = ByteBuffer.allocateDirect(4 * vtx.length);
         bb.order(ByteOrder.nativeOrder());
-        FloatBuffer fb=bb.asFloatBuffer();
+        FloatBuffer fb = bb.asFloatBuffer();
         fb.put(vtx);
         fb.position(0);
         return fb;
     }
-
     public static FloatBuffer createVertexBuffer() {
         final float vtx[] = {
                 -1f, 1f, 0f,

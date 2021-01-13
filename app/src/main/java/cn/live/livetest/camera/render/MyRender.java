@@ -19,8 +19,12 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
 
     private RenderScreen mRenderScreen;
 
+    private boolean updateSurface = false;
+    private final float[] mTexMtx = GlUtil.createIdentityMtx();
+    private FboRender fboRender;
     public MyRender(GLSurfaceView glSurfaceView) {
         mGLSurfaceView = glSurfaceView;
+        fboRender=new FboRender();
     }
 
     @Override
@@ -35,17 +39,31 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
             if(mRenderScreen==null){
                 initScreenTexture();
             }
+            mRenderScreen.setScreenSize(width,height);
         }
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-
+        synchronized (this){
+            if(updateSurface){
+                mSurfaceTexture.updateTexImage();
+                mSurfaceTexture.getTransformMatrix(mTexMtx);
+                updateSurface=false;
+            }
+        }
+        fboRender.draw(mTexMtx);
+        if(mRenderScreen!=null){
+            mRenderScreen.draw();
+        }
     }
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-
+        synchronized(this) {
+            updateSurface = true;
+        }
+        mGLSurfaceView.requestRender();
     }
 
     private void initSurfaceTexture() {
@@ -54,11 +72,8 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
         mSurfaceTextureId = textures[0];
         mSurfaceTexture = new SurfaceTexture(mSurfaceTextureId);
         mSurfaceTexture.setOnFrameAvailableListener(this);
-        //去除深度测试
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-        //去除背面渲染
         GLES20.glDisable(GLES20.GL_CULL_FACE);
-        //去除颜色混合
         GLES20.glDisable(GLES20.GL_BLEND);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mSurfaceTextureId);
@@ -66,9 +81,9 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
                 GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
                 GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
                 GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
                 GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
     }
 
@@ -93,7 +108,10 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
     }
 
     private void initScreenTexture(){
-        mRenderScreen=new RenderScreen(mSurfaceTextureId);
+        fboRender.setTextureId(mSurfaceTextureId);
+        fboRender.prepare();
+        int textureId = fboRender.getTextureId();
+        mRenderScreen=new RenderScreen(textureId);
     }
 }
 

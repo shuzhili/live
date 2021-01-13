@@ -68,7 +68,7 @@ public class RenderScreen {
 
     public void setTextureId(int textureId) {
         mFboTexId = textureId;
-        initCameraTexCoordBuffer();
+
     }
 
     private void initCameraTexCoordBuffer() {
@@ -104,6 +104,7 @@ public class RenderScreen {
     public void setScreenSize(int width, int height) {
         mScreenW = width;
         mScreenH = height;
+        initCameraTexCoordBuffer();
     }
 
     public void draw() {
