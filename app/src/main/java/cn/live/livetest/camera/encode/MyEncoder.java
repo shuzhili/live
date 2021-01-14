@@ -32,6 +32,9 @@ public class MyEncoder {
     }
 
     public boolean startMediaCodec() {
+        if (mMediaCodec == null || decodeSurface != null) {
+            return false;
+        }
         try {
             decodeSurface = new EncodeEglSurface(mMediaCodec.createInputSurface());
             mMediaCodec.start();

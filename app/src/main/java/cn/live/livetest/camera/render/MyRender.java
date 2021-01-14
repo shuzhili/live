@@ -10,6 +10,10 @@ import javax.microedition.khronos.opengles.GL10;
 
 import cn.live.livetest.camera.CameraHolder;
 import cn.live.livetest.camera.CameraUtils;
+import cn.live.livetest.camera.encode.EncodeRenderSurfaceTexture;
+import cn.live.livetest.camera.encode.MyEncoder;
+import cn.live.livetest.camera.encode.VideoMediaCodec;
+import cn.live.livetest.camera.video.VideoConfiguration;
 
 public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
     private boolean isCameraOpen = false;
@@ -22,9 +26,26 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
     private boolean updateSurface = false;
     private final float[] mTexMtx = GlUtil.createIdentityMtx();
     private FboRender fboRender;
+    private int fboTextureId;
+    private VideoConfiguration mVideoConfiguration;
+    private int mVideoWidth;
+    private int mVideoHeight;
+
+
+    private EncodeRenderSurfaceTexture encodeRenderSurfaceTexture;
+
     public MyRender(GLSurfaceView glSurfaceView) {
         mGLSurfaceView = glSurfaceView;
-        fboRender=new FboRender();
+        fboRender = new FboRender();
+    }
+
+    public void setVideoConfiguration(VideoConfiguration videoConfiguration) {
+        mVideoConfiguration = videoConfiguration;
+        mVideoWidth = VideoMediaCodec.getVideoSize(mVideoConfiguration.width);
+        mVideoHeight = VideoMediaCodec.getVideoSize(mVideoConfiguration.height);
+        if (mRenderScreen != null) {
+            mRenderScreen.setScreenSize(mVideoWidth, mVideoHeight);
+        }
     }
 
     @Override
@@ -35,32 +56,35 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         startCameraPreview();
-        if(isCameraOpen){
-            if(mRenderScreen==null){
+        if (isCameraOpen) {
+            if (mRenderScreen == null) {
                 initScreenTexture();
             }
-            mRenderScreen.setScreenSize(width,height);
+            mRenderScreen.setScreenSize(width, height);
         }
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        synchronized (this){
-            if(updateSurface){
+        synchronized (this) {
+            if (updateSurface) {
                 mSurfaceTexture.updateTexImage();
                 mSurfaceTexture.getTransformMatrix(mTexMtx);
-                updateSurface=false;
+                updateSurface = false;
             }
         }
         fboRender.draw(mTexMtx);
-        if(mRenderScreen!=null){
+        if (mRenderScreen != null) {
             mRenderScreen.draw();
+        }
+        if (encodeRenderSurfaceTexture != null) {
+            encodeRenderSurfaceTexture.draw();
         }
     }
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        synchronized(this) {
+        synchronized (this) {
             updateSurface = true;
         }
         mGLSurfaceView.requestRender();
@@ -107,11 +131,21 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
         }
     }
 
-    private void initScreenTexture(){
+    private void initScreenTexture() {
         fboRender.setTextureId(mSurfaceTextureId);
         fboRender.prepare();
-        int textureId = fboRender.getTextureId();
-        mRenderScreen=new RenderScreen(textureId);
+        fboTextureId = fboRender.getTextureId();
+        mRenderScreen = new RenderScreen(fboTextureId);
+    }
+
+
+    public void setVideoEncoder(MyEncoder encoder) {
+        synchronized (this) {
+            if (encoder != null) {
+                encodeRenderSurfaceTexture = new EncodeRenderSurfaceTexture(encoder, fboTextureId);
+                encodeRenderSurfaceTexture.setVideoSize(mVideoWidth, mVideoHeight);
+            }
+        }
     }
 }
 
