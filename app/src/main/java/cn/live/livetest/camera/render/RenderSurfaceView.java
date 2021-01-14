@@ -50,6 +50,10 @@ public class RenderSurfaceView extends GLSurfaceView {
             CameraHolder.instance().releaseCamera();
         }
     };
+
+    public MyRender getRender() {
+        return myRender;
+    }
 }
 
 
