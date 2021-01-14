@@ -27,6 +27,8 @@ public class MyEncoder {
     private EncodeEglSurface decodeSurface;
     private ReentrantLock encoderLock;
 
+    private boolean isPause = false;
+
     public MyEncoder(VideoConfiguration configuration) {
         mVideoConfiguration = configuration;
     }
@@ -78,6 +80,9 @@ public class MyEncoder {
     private void encodeRun() {
         ByteBuffer[] outBuffers = mMediaCodec.getOutputBuffers();
         while (isStarted) {
+            if (isPause) {
+                return;
+            }
             encoderLock.lock();
             if (mMediaCodec != null) {
                 int outBufferIndex = mMediaCodec.dequeueOutputBuffer(mBufferInfo, 12000);
@@ -138,6 +143,10 @@ public class MyEncoder {
 
     public void setVideoEncodeListener(OnVideoEncodeListener listener) {
         mListener = listener;
+    }
+
+    public void setPause(boolean b) {
+        isPause = b;
     }
 }
 
