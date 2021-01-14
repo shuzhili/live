@@ -1,0 +1,37 @@
+下面我们挨个来看每层的结构.
+
+Slice(片)
+可以看到NALU的主体是slice。
+slice是H264提出的新概念，编码图片后切分高效整合而成。
+一个图片有一个或者多个slice。通过NALU装载网络传输。
+
+设置片的目的是为了限制误码的扩散和传输，编码片是项目独立的，一个片的预测不能以其他片中的宏块为参考图像。保证了某一片的预测误差不会传播到别的片。
+
+一个slice同样包含Slice Header + Slice Data
+
+slice有以下五种类型
+
+(1) I -slice: slice的全部MB（宏块）都采用intra-prediction（帧内预测）的方式来编码；
+(2) P-slice: slice中的MB（宏块）使用intra-prediction（帧内预测）和inter-prediction（帧间预测）的方式来编码，但每一个inter-prediction block最多只能使用一个移动向量；
+(3) B-slice:与P-slice类似，但每一个inter-prediction block可以使用二个移动向量。B-slice的‘B’是指Bi-predictive（双向预测），除了可由前一张和后一张影像的I(或P、B)-slice外，也能从前二张不同影像的I(或P、B)-slice来做inter- prediction。
+(4) SP-slice:即所谓的Switching P slice，为P-slice的一种特殊类型，用来串接两个不同bitrate的bitstream；
+(5) SI-slice: 即所谓的Switching I slice，为I-slice的一种特殊类型，除了用来串接两个不同content的bitstream外，也可用来执行随机存取(random access)来达到网络VCR的功能
+
+宏块(Macroblock,MB)
+从上面结构图中可以看到片中包含宏块。那什么是宏块呢？
+宏块是视频信息的主要承载者。一个编码图像通常划分为多个宏块组成.包含着每一个像素的亮度和色度信息。视频解码最主要的工作则是提供高效的方式从码流中获得宏块中像素阵列。
+
+一个宏块 = 一个16*16的亮度像素 + 一个8×8Cb + 一个8×8Cr彩色像素块组成。(YCbCr 是属于 YUV 家族的一员,在YCbCr 中 Y 是指亮度分量，Cb 指蓝色色度分量，而 Cr 指红色色度分量)
+
+宏块分类:
+
+I宏块: 帧内预测
+
+P宏块: 利用前帧作为参考进行帧内预测，一个帧内编码的宏块可进一步作宏块的分割
+
+B宏块: 双向参考图像（前帧和后帧）进行帧内预测
+
+简单总结下帧和片和宏块的概念
+1帧 = 1个或n个片
+1片 = n个宏块
+1宏块 = 16x16yuv数据
