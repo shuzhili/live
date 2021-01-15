@@ -55,37 +55,62 @@ public class AnnexbHelper {
     private byte[] mSps;
     private boolean mUploadPpsSps = true;
 
-    public void analyseVideoData(ByteBuffer bb,MediaCodec.BufferInfo bi){
+    public void analyseVideoData(ByteBuffer bb, MediaCodec.BufferInfo bi) {
         bb.position(bi.offset);
-        bb.limit(bi.offset+bi.size);
+        bb.limit(bi.offset + bi.size);
 
-        ArrayList<byte[]> frames=new ArrayList<>();
-        boolean isKeyFrame=false;
-        while(bb.position()<bi.offset+bi.size){
-            byte[] frame=annexbDemux(bb,bi);
-            if(frame==null){
+        ArrayList<byte[]> frames = new ArrayList<>();
+        boolean isKeyFrame = false;
+        while (bb.position() < bi.offset + bi.size) {
+            byte[] frame = annexbDemux(bb, bi);
+            if (frame == null) {
                 break;
             }
-            if(isAccessUnitDelimiter(frame)){
+            if (isAccessUnitDelimiter(frame)) {
                 continue;
             }
-            if(isPps(frame)){
-                mPps=frame;
+            if (isPps(frame)) {
+                mPps = frame;
                 continue;
             }
-            if(isSps(frame)){
-                mSps=frame;
+            if (isSps(frame)) {
+                mSps = frame;
                 continue;
             }
-            if(isKeyFrame(frame)){
-                isKeyFrame=true;
-            }else {
-                isKeyFrame=false;
+            if (isKeyFrame(frame)) {
+                isKeyFrame = true;
+            } else {
+                isKeyFrame = false;
             }
 
-            byte[] naluHeader=buildNaluHeader(frame.length);
+            byte[] naluHeader = buildNaluHeader(frame.length);
             frames.add(naluHeader);
             frames.add(frame);
+        }
+
+        if (mPps != null && mSps != null && mListener != null && mUploadPpsSps) {
+            if (mListener != null) {
+                mListener.onSpsPps(mSps, mPps);
+            }
+            mUploadPpsSps = false;
+        }
+        if (frames.size() == 0 || mListener == null) {
+            return;
+        }
+        int size = 0;
+        for (int i = 0; i < frames.size(); i++) {
+            byte[] frame = frames.get(i);
+            size += frame.length;
+        }
+        byte[] data = new byte[size];
+        int currentSize = 0;
+        for (int i = 0; i < frames.size(); i++) {
+            byte[] frame = frames.get(i);
+            System.arraycopy(frame, 0, data, currentSize, frame.length);
+            currentSize += frame.length;
+        }
+        if (mListener != null) {
+            mListener.onVideo(data, isKeyFrame);
         }
     }
 
@@ -137,7 +162,8 @@ public class AnnexbHelper {
             pos++;
         }
     }
-    //这里为啥是4 放入length是干啥的？
+
+    //这里为啥是4 放入length是干啥的？ 00 00 00 01?
     private byte[] buildNaluHeader(int length) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.putInt(length);
@@ -167,9 +193,28 @@ public class AnnexbHelper {
         return nal_unit_type == AccessUnitDelimiter;
     }
 
+    public void stop() {
+        mListener = null;
+        mPps = null;
+        mSps = null;
+        mUploadPpsSps = true;
+    }
+
     class AnnexbSearch {
         public int startCode = 0;
         public boolean match = false;
+    }
+
+    public interface AnnexbNaluListener {
+        void onSpsPps(byte[] sps, byte[] pps);
+
+        void onVideo(byte[] data, boolean isKeyFrame);
+    }
+
+    private AnnexbNaluListener mListener;
+
+    public void setAnnexbNaluListener(AnnexbNaluListener listener) {
+        this.mListener = listener;
     }
 }
 
