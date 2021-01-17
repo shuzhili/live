@@ -4,16 +4,19 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.os.Looper;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import cn.live.livetest.camera.CameraHolder;
+import cn.live.livetest.camera.CameraListener;
 import cn.live.livetest.camera.CameraUtils;
 import cn.live.livetest.camera.encode.EncodeRenderSurfaceTexture;
 import cn.live.livetest.camera.encode.MyEncoder;
 import cn.live.livetest.camera.encode.VideoMediaCodec;
 import cn.live.livetest.camera.video.VideoConfiguration;
+import cn.live.livetest.utils.WeakHandler;
 
 public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
     private boolean isCameraOpen = false;
@@ -125,8 +128,17 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
                 CameraHolder.instance().openCamera();
                 CameraHolder.instance().startPreview();
                 isCameraOpen = true;
+                if (mCameraOpenListener != null) {
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mCameraOpenListener.onOpenSuccess();
+                        }
+                    });
+                }
             } catch (Exception e) {
                 e.printStackTrace();
+                postOpenCameraError(CameraListener.CAMERA_OPEN_FAILED);
             }
         }
     }
@@ -146,6 +158,26 @@ public class MyRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameA
                 encodeRenderSurfaceTexture.setVideoSize(mVideoWidth, mVideoHeight);
             }
         }
+    }
+
+    private void postOpenCameraError(final int error) {
+        if (mCameraOpenListener != null) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (mCameraOpenListener != null) {
+                        mCameraOpenListener.onOpenFail(error);
+                    }
+                }
+            });
+        }
+    }
+
+    protected CameraListener mCameraOpenListener;
+    private WeakHandler mHandler = new WeakHandler(Looper.getMainLooper());
+
+    public void setCameraOpenListener(CameraListener cameraOpenListener) {
+        this.mCameraOpenListener = cameraOpenListener;
     }
 }
 

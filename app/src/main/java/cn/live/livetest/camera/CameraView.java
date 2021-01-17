@@ -20,7 +20,7 @@ public class CameraView extends FrameLayout {
     private boolean isMediaOverlay = true;
     private float mAspectRatio = 9.0f / 16;
 
-    private MyRender render;
+    protected MyRender render;
     private RenderSurfaceView renderSurfaceView;
 
     private ScaleGestureDetector mZoomGestureDetector;

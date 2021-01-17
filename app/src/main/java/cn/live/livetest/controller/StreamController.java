@@ -36,6 +36,10 @@ public class StreamController implements OnAudioEncodeListener, OnVideoEncodeLis
         mPacker.setPacketListener(this);
     }
 
+    public void setSender(Sender sender) {
+        mSender = sender;
+    }
+
     public synchronized void start() {
         SopCastUtils.processNotUI(new SopCastUtils.INotUIProcessor() {
             @Override
