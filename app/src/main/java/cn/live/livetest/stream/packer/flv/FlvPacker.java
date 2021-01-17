@@ -52,7 +52,23 @@ public class FlvPacker implements Packer, AnnexbHelper.AnnexbNaluListener {
 
     @Override
     public void onAudioData(ByteBuffer bb, MediaCodec.BufferInfo bi) {
+        if (packetListener == null || !isHeaderWrite || !isKeyFrameWrite) {
+            return;
+        }
+        bb.position(bi.offset);
+        bb.limit(bi.offset + bi.size);
+        byte[] audio = new byte[bi.size];
+        bb.get(audio);
 
+        int compositionTime = (int) (System.currentTimeMillis() - mStartTime);
+        int audioPacketSize = AUDIO_HEADER_SIZE + audio.length;
+        int dataSize = audioPacketSize + FLV_TAG_HEADER_SIZE;
+        int size = dataSize + PRE_SIZE;
+        ByteBuffer buffer = ByteBuffer.allocate(size);
+        FlvPackerHelper.writeFlvTagHeader(buffer, FlvPackerHelper.FlvTag.Audio, audioPacketSize, compositionTime);
+        FlvPackerHelper.writeAudioTag(buffer, audio, false, mAudioSampleSize);
+        buffer.putInt(dataSize);
+        packetListener.onPacket(buffer.array(), AUDIO);
     }
 
     @Override

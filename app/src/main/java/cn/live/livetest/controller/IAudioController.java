@@ -1,4 +1,7 @@
-package cn.live.livetest.audio;
+package cn.live.livetest.controller;
+
+import cn.live.livetest.audio.AudioConfiguration;
+import cn.live.livetest.audio.OnAudioEncodeListener;
 
 public interface IAudioController {
     void start();

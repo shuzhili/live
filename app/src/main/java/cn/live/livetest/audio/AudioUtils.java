@@ -36,7 +36,7 @@ public class AudioUtils {
         return size;
     }
 
-    private static AudioRecord getAudioRecord(AudioConfiguration audioConfiguration) {
+    public static AudioRecord getAudioRecord(AudioConfiguration audioConfiguration) {
         int frequency = audioConfiguration.frequency;
         int audioEncoding = audioConfiguration.encoding;
         int channelConfiguration = AudioFormat.CHANNEL_CONFIGURATION_MONO;
