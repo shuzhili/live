@@ -25,7 +25,7 @@ public class AudioUtils {
         return result;
     }
 
-    private static int getRecordBufferSize(AudioConfiguration audioConfiguration) {
+    public static int getRecordBufferSize(AudioConfiguration audioConfiguration) {
         int frequency = audioConfiguration.frequency;
         int audioEncoding = audioConfiguration.encoding;
         int channelConfiguration = AudioFormat.CHANNEL_CONFIGURATION_MONO;
